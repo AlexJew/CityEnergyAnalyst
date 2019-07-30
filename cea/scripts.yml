@@ -272,7 +272,6 @@ Thermal networks:
     parameters: ['general:scenario', 'general:weather', 'general:multiprocessing',
                  'general:number-of-cpus-to-keep-free', 'thermal-network']
     input-files:
-#      - [get_network_layout_nodes_shapefile, "thermal-network:network_type", "thermal-network:network_name"]
       - [get_demand_results_file, building_name]
       - [get_thermal_networks]
       - [get_supply_systems]
