@@ -50,7 +50,7 @@ class Configuration(object):
 
     def __setattr__(self, key, value):
         """Set the value on a parameter in the general section"""
-        if key in {'default_config', 'user_config', 'sections', 'restricted_to'}:
+        if key in {'default_config', 'user_config', 'sections', 'restricted_to', 'ignore_restrictions'}:
             # make sure the __init__ method doesn't trigger this
             return super(Configuration, self).__setattr__(key, value)
 
@@ -95,6 +95,36 @@ class Configuration(object):
             # allow those two too
             self.restricted_to.append('general:project')
             self.restricted_to.append('general:scenario-name')
+
+    def ignore_restrictions(self):
+        """
+        Use this in a ``with`` clause, to temporarily lift restrictions - the config file is normally restricted to
+        a subset of all parameters, using the ``scripts.yml`` file. This helps make sure each script declares the
+        specific set of parameters it wants to use.
+
+        In some cases, this restriction needs to be lifted. e.g. when using ``cea.api`` to call other scripts. That's
+        what this function allows. Example code::
+
+            with config.ignore_restrictions():
+                # current scripts isn't configured to use this property, but it will still work
+                config.thermal_networks.use_representative_week_per_month = False
+            # using that property here would raise an error
+        :return:
+        """
+        class ConfigurationRestrictionContextManager(object):
+            def __init__(self, config):
+                self.config = config
+                self.old_restricted_to = config.restricted_to
+
+            def __enter__(self):
+                self.config.restricted_to = None
+                return None
+
+            def __exit__(self, type, value, traceback):
+                self.config.restricted_to = self.old_restricted_to
+                # if an error happened, re-raise using context manager protocol from PEP 343
+                return type is None
+        return ConfigurationRestrictionContextManager(self)
 
     def apply_command_line_args(self, args, option_list):
         """Apply the command line args as passed to cea.interfaces.cli.cli (the ``cea`` command). Each argument
