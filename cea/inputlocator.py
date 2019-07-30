@@ -774,21 +774,16 @@ class InputLocator(object):
         """scenario/outputs/data/optimization/network/layout/DH_EdgeNode.csv or DC_EdgeNode.csv
         Edge-node matrix for a heating or cooling network
         """
-        if len(network_name) is 0:
-            file_name = network_type + "_" + "_EdgeNode.csv"
-        else:
-            file_name = network_type + "_" + network_name + "_EdgeNode.csv"
+        file_name = "{network_type}_{network_name}_EdgeNode.csv".format(network_type=network_type,
+                                                                        network_name=network_name)
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_thermal_network_node_types_csv_file(self, network_type, network_name):
         """scenario/outputs/data/optimization/network/layout/DH_Nodes.csv or DC_NodesData.csv
         Network layout files for nodes of district heating or cooling networks
         """
-        if len(network_name) is 0:
-            file_name = network_type + '_' + '_Nodes.csv'
-        else:
-            file_name = network_type + '_' + network_name + '_Nodes.csv'
-
+        file_name = "{network_type}_{network_name}_Nodes.csv".format(network_type=network_type,
+                                                                        network_name=network_name)
         return os.path.join(self.get_thermal_network_folder(), file_name)
 
     def get_plant_nodes(self, network_type, network_name):
