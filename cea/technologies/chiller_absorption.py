@@ -1,6 +1,7 @@
 """
 Absorption chillers
 """
+
 from __future__ import division, print_function
 import cea.config
 import cea.globalvar
@@ -25,6 +26,7 @@ __status__ = "Production"
 
 def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_ground_K, locator, ACH_type):
     """
+
     This model calculates the operation conditions of the absorption chiller given the chilled water loads in
     evaporators and the hot water inlet temperature in the generator (desorber).
     This is an empiral model using characteristic equation method developed by _[Kuhn A. & Ziegler F., 2005].
@@ -44,10 +46,12 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
     :type T_ground_K: float
     :param locator: locator class
     :return:
+
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
     ..[Puig-Arnavat M. et al, 2010] Analysis and parameter identification for characteristic equations of single- and
     double-effect absorption chillers by means of multivariable regression. Int J Refrig: 2010.
+
     """
 
     # create a dict of input operating conditions
@@ -111,16 +115,20 @@ def calc_chiller_main(mdot_chw_kgpers, T_chw_sup_K, T_chw_re_K, T_hw_in_C, T_gro
 
 def calc_operating_conditions(chiller_prop, input_conditions):
     """
+
     Calculates chiller operating conditions at given input conditions by solving the characteristic equations and the
     energy balance equations. This method is adapted from _[Kuhn A. & Ziegler F., 2005].
+
     :param chiller_prop: parameters in the characteristic equations and the external flow rates.
     :type chiller_prop: dict
     :param input_conditions:
     :type input_conditions: dict
     :return: a dict with operating conditions of the chilled water, cooling water and hot water loops in a absorption
     chiller.
+
     ..[Kuhn A. & Ziegler F., 2005] Operational results of a 10kW absorption chiller and adaptation of the characteristic
     equation. In: Proceedings of the interantional conference solar air confitioning. Bad Staffelstein, Germany: 2005.
+
     """
     # external water circuits (e: chilled water, ac: cooling water, d: hot water)
     T_cw_in_C = input_conditions['T_ground_K'] - 273.0  # condenser water inlet temperature
