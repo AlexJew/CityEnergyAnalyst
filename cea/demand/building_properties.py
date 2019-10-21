@@ -59,7 +59,7 @@ class BuildingProperties(object):
             prop_occupancy_df.drop('REFERENCE', 1, inplace=True)
         prop_occupancy_df.fillna(value=0.0, inplace=True)  # fix badly formatted occupancy file...
         prop_occupancy = prop_occupancy_df.loc[:, (prop_occupancy_df != 0).any(axis=0)]
-        prop_architectures = dbf_to_dataframe(locator.get_building_architecture())
+        prop_architecture = dbf_to_dataframe(locator.get_building_architecture())
         prop_age = dbf_to_dataframe(locator.get_building_age()).set_index('Name')
         # Drop 'REFERENCE' column if it exists
         if 'REFERENCE' in prop_age:
@@ -76,7 +76,7 @@ class BuildingProperties(object):
         prop_HVAC_result = get_properties_technical_systems(locator, prop_hvac).set_index('Name')
 
         # get envelope properties
-        prop_envelope = get_envelope_properties(locator, prop_architectures).set_index('Name')
+        prop_envelope = get_envelope_properties(locator, prop_architecture).set_index('Name')
 
         # apply overrides
         if override_variables:
@@ -347,23 +347,38 @@ class BuildingProperties(object):
         envelope['Awin'] = np.nan
         envelope['Aroof'] = np.nan
 
-        # call all building geometry files in a loop
         for building_name in locator.get_zone_building_names():
-            geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name))
+            # call all building geometry files in a loop
+            geometry_data = pd.read_csv(locator.get_radiation_metadata(building_name)).set_index('SURFACE')
+
+            # read daysim radiation
+            radiation_data = pd.read_json(locator.get_radiation_building(building_name))
+
+            # assume vertical surfaces that do not get any solar irradiation throughout the year are in contact with a
+            # surrounding building and are therefore adiabatic
+            for surface in geometry_data.index:
+                if (geometry_data.loc[surface, 'TYPE'] in ['walls', 'windows']) and (np.isclose(np.sum(radiation_data[surface]), 0.0)):
+                    geometry_data.drop(surface, inplace=True)
+
+            # sum geometry data by surface type
             geometry_data_sum = geometry_data.groupby(by='TYPE').sum()
-            # do this in case the daysim radiation file did not included window
+
+            # do this in case the daysim radiation file did not include any windows
             if 'windows' in geometry_data.TYPE.values:
                 if 'walls' in geometry_data.TYPE.values:
                     envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2']
                     envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
                     envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
                 else:
-                    envelope.ix[building_name, 'Awall'] = 0.0 #when window to wall ration is 1, there are no walls.
+                    envelope.ix[building_name, 'Awall'] = 0.0 # when window to wall ratio is 1, there are no walls.
                     envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['windows', 'AREA_m2']
                     envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
 
             else:
-                multiplier_win = 0.25 * (envelope.ix[building_name, 'wwr_south'] + envelope.ix[building_name, 'wwr_east'] +  envelope.ix[building_name, 'wwr_north'] + envelope.ix[building_name, 'wwr_west'])
+                multiplier_win = 0.25 * (envelope.ix[building_name, 'wwr_south'] +
+                                         envelope.ix[building_name, 'wwr_east'] +
+                                         envelope.ix[building_name, 'wwr_north'] +
+                                         envelope.ix[building_name, 'wwr_west'])
                 envelope.ix[building_name, 'Awall'] = geometry_data_sum.ix['walls', 'AREA_m2'] * (1 - multiplier_win)
                 envelope.ix[building_name, 'Awin'] = geometry_data_sum.ix['walls', 'AREA_m2'] * multiplier_win
                 envelope.ix[building_name, 'Aroof'] = geometry_data_sum.ix['roofs', 'AREA_m2']
