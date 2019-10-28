@@ -1,10 +1,11 @@
 FROM continuumio/miniconda
-COPY ./environment.yml /tmp/environment.yml
 RUN apt-get update -y && apt-get -y install gcc git libgl1-mesa-glx
+COPY ./environment.yml /tmp/environment.yml
 
-RUN conda env create -q -f /tmp/environment.yml -n cea
+RUN conda env create -f /tmp/environment.yml -n cea
+RUN echo "source activate cea" > ~/.bashrc
 RUN /bin/bash -c "source activate cea && \
-    pip install git+https://github.com/architecture-building-systems/CityEnergyAnalyst.git@1005-fix-installation-guide-for-ubuntu && \
+    pip install git+https://github.com/architecture-building-systems/CityEnergyAnalyst.git@docker-test && \
     cea extract-reference-case --destination ~/ && \
     cea-config demand --scenario ~/reference-case-open/baseline && \
     cea-config radiation --daysim-bin-directory /root/Daysim/bin"
@@ -24,4 +25,3 @@ RUN cd build && cmake -DBUILD_HEADLESS=on -DCMAKE_INSTALL_PREFIX=$HOME/Daysim ..
 
 # use the environment - no need to source because it's the only environment anyway...
 ENV PATH "/opt/conda/envs/cea/bin:/root/Daysim/bin:$PATH"
-CMD ipython
