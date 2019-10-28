@@ -142,7 +142,7 @@ def main(config):
     app.workers = {}  # script-name -> (Process, Connection)
 
     print("start socketio.run")
-    socketio.run(app, host='localhost', port=5050)
+    socketio.run(app, host='0.0.0.0', port=5050)
     print("done socketio.run")
 
 
